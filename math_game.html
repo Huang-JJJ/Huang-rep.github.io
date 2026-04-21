@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学配对小游戏</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --cream: #FFF8E7;
+    --sky: #7DD3FC;
+    --coral: #FF8B7B;
+    --sunshine: #FFD93D;
+    --mint: #8EE4AF;
+    --grape: #C8A8E9;
+    --ink: #2D3748;
+    --ink-soft: #4A5568;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'ZCOOL KuaiLe', 'Fredoka', sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(125, 211, 252, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(255, 217, 61, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 75% 85%, rgba(255, 139, 123, 0.3) 0%, transparent 45%),
+      radial-gradient(circle at 20% 80%, rgba(142, 228, 175, 0.3) 0%, transparent 45%),
+      var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+  }
+
+  /* Floating decorative shapes */
+  .deco {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+  }
+  .deco.star1 { top: 8%; left: 6%; animation: bob 6s ease-in-out infinite; }
+  .deco.star2 { top: 15%; right: 8%; animation: bob 7s ease-in-out infinite 1s; }
+  .deco.star3 { bottom: 12%; left: 10%; animation: bob 5s ease-in-out infinite 0.5s; }
+  .deco.cloud1 { bottom: 20%; right: 5%; animation: bob 8s ease-in-out infinite 2s; }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(8deg); }
+  }
+
+  .game-wrap {
+    width: 100%;
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 32px;
+    padding: 28px 28px 36px;
+    box-shadow:
+      0 2px 0 rgba(0,0,0,0.04),
+      0 20px 50px -10px rgba(45, 55, 72, 0.18),
+      inset 0 -6px 0 rgba(0,0,0,0.04);
+    border: 4px solid var(--ink);
+  }
+
+  /* ===== START SCREEN ===== */
+  .start-screen {
+    text-align: center;
+    padding: 20px 10px;
+  }
+
+  .title {
+    font-family: 'ZCOOL QingKe HuangYou', 'Fredoka', sans-serif;
+    font-size: clamp(42px, 8vw, 68px);
+    line-height: 1;
+    margin-bottom: 10px;
+    color: var(--ink);
+    letter-spacing: 2px;
+    text-shadow: 4px 4px 0 var(--sunshine);
+  }
+
+  .subtitle {
+    font-size: 20px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+  }
+
+  .mascots {
+    font-size: 56px;
+    margin: 18px 0 24px;
+    letter-spacing: 8px;
+    animation: wiggle 3s ease-in-out infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  .rules {
+    background: var(--cream);
+    border: 3px dashed var(--ink);
+    border-radius: 20px;
+    padding: 18px 20px;
+    margin: 0 auto 28px;
+    max-width: 420px;
+    text-align: left;
+    font-size: 17px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+  }
+
+  .rules b { color: var(--coral); }
+
+  .btn {
+    font-family: inherit;
+    border: 4px solid var(--ink);
+    background: var(--sunshine);
+    color: var(--ink);
+    font-size: 24px;
+    padding: 16px 42px;
+    border-radius: 999px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 0 6px 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--ink); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink); }
+  .btn.coral { background: var(--coral); color: #fff; }
+  .btn.mint { background: var(--mint); }
+
+  /* ===== GAME SCREEN ===== */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+  }
+  .pill.sky { background: var(--sky); color: var(--ink); }
+  .pill.coral { background: var(--coral); color: #fff; }
+
+  .progress-track {
+    width: 100%;
+    height: 14px;
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mint), var(--sunshine), var(--coral));
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0%;
+  }
+
+  .problem-box {
+    background: linear-gradient(135deg, var(--sky) 0%, #a5e0fb 100%);
+    border: 4px solid var(--ink);
+    border-radius: 24px;
+    padding: 40px 24px;
+    text-align: center;
+    margin-bottom: 26px;
+    box-shadow: 0 8px 0 var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .problem-box::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+  }
+  .problem-label {
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .problem-text {
+    font-family: 'Fredoka', 'ZCOOL QingKe HuangYou', sans-serif;
+    font-size: clamp(54px, 12vw, 86px);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 8px;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .answers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 560px) {
+    .answers { grid-template-columns: repeat(2, 1fr); }
+    .title { text-shadow: 3px 3px 0 var(--sunshine); }
+  }
+
+  .answer {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 42px;
+    background: #fff;
+    border: 4px solid var(--ink);
+    color: var(--ink);
+    padding: 22px 0;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+    user-select: none;
+  }
+  .answer:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 0 var(--ink);
+    background: var(--sunshine);
+  }
+  .answer:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .answer:disabled { cursor: not-allowed; }
+  .answer.correct {
+    background: var(--mint) !important;
+    animation: pop 0.5s ease;
+  }
+  .answer.wrong {
+    background: var(--coral) !important;
+    color: #fff;
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15) rotate(-3deg); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .feedback {
+    text-align: center;
+    height: 32px;
+    margin-top: 18px;
+    font-size: 22px;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .feedback.ok { color: #22c55e; }
+  .feedback.no { color: var(--coral); }
+
+  /* ===== END SCREEN ===== */
+  .end-screen { text-align: center; padding: 10px; }
+
+  .trophy {
+    font-size: 90px;
+    margin-bottom: 10px;
+    display: inline-block;
+    animation: trophy-bounce 1.2s ease-out;
+  }
+  @keyframes trophy-bounce {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .end-title {
+    font-family: 'ZCOOL QingKe HuangYou', sans-serif;
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+
+  .score-display {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 96px;
+    font-weight: 700;
+    line-height: 1;
+    margin: 10px 0 6px;
+    background: linear-gradient(180deg, var(--coral), var(--sunshine));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 4px 4px 0 rgba(45, 55, 72, 0.1);
+  }
+  .score-unit { font-size: 28px; color: var(--ink-soft); letter-spacing: 2px; }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0 22px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 10px 18px;
+    font-size: 17px;
+  }
+  .stat-chip b { font-size: 22px; color: var(--coral); letter-spacing: 1px; }
+
+  .message-box {
+    background: var(--sunshine);
+    border: 4px solid var(--ink);
+    border-radius: 20px;
+    padding: 22px 20px;
+    margin: 0 auto 26px;
+    max-width: 460px;
+    font-size: 22px;
+    line-height: 1.5;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 0 var(--ink);
+    position: relative;
+  }
+  .message-box.tier-0 { background: var(--grape); color: #fff; }
+  .message-box.tier-1 { background: var(--sky); }
+  .message-box.tier-2 { background: var(--mint); }
+  .message-box.tier-3 { background: var(--sunshine); }
+  .message-box.tier-4 { background: var(--coral); color: #fff; }
+  .message-box.tier-5 {
+    background: linear-gradient(135deg, #FFD93D, #FF8B7B, #C8A8E9);
+    color: #fff;
+    text-shadow: 2px 2px 0 rgba(45, 55, 72, 0.3);
+  }
+
+  .hidden { display: none !important; }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    pointer-events: none;
+    z-index: 999;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Decorative background shapes -->
+<svg class="deco star1" width="60" height="60" viewBox="0 0 24 24"><path fill="#FFD93D" stroke="#2D3748" stroke-width="1.5" stroke-linejoin="round" d="M12 2l2.4 6.4L21 9l-5 4.8L17.5 21 12 17.3 6.5 21 8 13.8 3 9l6.6-.6z"/></svg>
+<svg class="deco star2" width="44" height="44" viewBox="0 0 24 24"><path fill="#FF8B7B" stroke="#2D3748" stroke-width="1.5" stroke-linejoin="round" d="M12 2l2.4 6.4L21 9l-5 4.8L17.5 21 12 17.3 6.5 21 8 13.8 3 9l6.6-.6z"/></svg>
+<svg class="deco star3" width="50" height="50" viewBox="0 0 24 24"><path fill="#8EE4AF" stroke="#2D3748" stroke-width="1.5" stroke-linejoin="round" d="M12 2l2.4 6.4L21 9l-5 4.8L17.5 21 12 17.3 6.5 21 8 13.8 3 9l6.6-.6z"/></svg>
+<svg class="deco cloud1" width="80" height="50" viewBox="0 0 64 40"><path fill="#fff" stroke="#2D3748" stroke-width="2" d="M16 30c-6 0-10-4-10-9s4-9 10-9c1-5 6-9 12-9s11 4 12 9c6 0 10 4 10 9s-4 9-10 9z"/></svg>
+
+<div class="game-wrap">
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="card start-screen">
+    <h1 class="title">数学配对</h1>
+    <div class="subtitle">✨ 小小数学家等你来挑战 ✨</div>
+    <div class="mascots">🧮 🎈 🌈</div>
+    <div class="rules">
+      📝 一共 <b>10 道题</b><br>
+      ➕ 加法和减法题目<br>
+      🔢 答案在 <b>0 到 10</b> 之间<br>
+      ⭐ 每答对一题得 <b>10 分</b><br>
+      🏆 满分 <b>100 分</b> 哦！
+    </div>
+    <button class="btn" onclick="startGame()">开 始 游 戏</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="card hidden">
+    <div class="hud">
+      <div class="pill sky">🎯 第 <span id="questionNum">1</span> / 10 题</div>
+      <div class="pill coral">⭐ <span id="scoreNum">0</span> 分</div>
+    </div>
+    <div class="progress-track">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+
+    <div class="problem-box">
+      <div class="problem-label">◆  请 选 出 正 确 的 答 案  ◆</div>
+      <div id="problemText" class="problem-text">3 + 2 = ?</div>
+    </div>
+
+    <div id="answers" class="answers"></div>
+    <div id="feedback" class="feedback"></div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="endScreen" class="card end-screen hidden">
+    <div id="trophy" class="trophy">🏆</div>
+    <div class="end-title">游戏结束啦！</div>
+    <div class="score-display">
+      <span id="finalScore">0</span><span class="score-unit"> 分</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip">答对 <b id="correctCount">0</b> 题</div>
+      <div class="stat-chip">答错 <b id="wrongCount">0</b> 题</div>
+    </div>
+    <div id="messageBox" class="message-box"></div>
+    <button class="btn coral" onclick="restartGame()">再 玩 一 次</button>
+  </div>
+
+</div>
+
+<script>
+  // ============ GAME STATE ============
+  let currentQuestion = 0;
+  let score = 0;
+  let correctCount = 0;
+  let wrongCount = 0;
+  let currentAnswer = null;
+  let questions = [];
+  let answering = false;
+
+  // ============ QUESTION GENERATION ============
+  // Generate 10 questions: addition/subtraction with results 0-10
+  function generateQuestions() {
+    const qs = [];
+    for (let i = 0; i < 10; i++) {
+      // Roughly alternate + and -
+      const isAdd = Math.random() < 0.5;
+      let a, b, result, text;
+
+      if (isAdd) {
+        // a + b = result (0-10)
+        result = Math.floor(Math.random() * 11); // 0-10
+        a = Math.floor(Math.random() * (result + 1));
+        b = result - a;
+        text = `${a} + ${b} = ?`;
+      } else {
+        // a - b = result (0-10), a <= 10
+        a = Math.floor(Math.random() * 11); // 0-10
+        b = Math.floor(Math.random() * (a + 1));
+        result = a - b;
+        text = `${a} − ${b} = ?`;
+      }
+      qs.push({ text, answer: result });
+    }
+    return qs;
+  }
+
+  // Generate 4 answer choices (including correct one)
+  function generateChoices(correct) {
+    const choices = new Set([correct]);
+    while (choices.size < 4) {
+      const delta = Math.floor(Math.random() * 7) - 3; // -3 to +3
+      const cand = correct + delta;
+      if (cand >= 0 && cand <= 10 && cand !== correct) {
+        choices.add(cand);
+      }
+    }
+    // Shuffle
+    const arr = [...choices];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ============ SCREEN FLOW ============
+  function startGame() {
+    currentQuestion = 0;
+    score = 0;
+    correctCount = 0;
+    wrongCount = 0;
+    questions = generateQuestions();
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('endScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.remove('hidden');
+    showQuestion();
+  }
+
+  function showQuestion() {
+    if (currentQuestion >= 10) {
+      endGame();
+      return;
+    }
+    answering = true;
+    const q = questions[currentQuestion];
+    currentAnswer = q.answer;
+
+    document.getElementById('questionNum').textContent = currentQuestion + 1;
+    document.getElementById('scoreNum').textContent = score;
+    document.getElementById('problemText').textContent = q.text;
+    document.getElementById('progressFill').style.width = (currentQuestion * 10) + '%';
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+
+    const choices = generateChoices(q.answer);
+    const answersEl = document.getElementById('answers');
+    answersEl.innerHTML = '';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'answer';
+      btn.textContent = c;
+      btn.onclick = () => checkAnswer(btn, c);
+      answersEl.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(btn, val) {
+    if (!answering) return;
+    answering = false;
+
+    const fb = document.getElementById('feedback');
+    const allBtns = document.querySelectorAll('.answer');
+    allBtns.forEach(b => b.disabled = true);
+
+    if (val === currentAnswer) {
+      btn.classList.add('correct');
+      score += 10;
+      correctCount++;
+      fb.textContent = '🎉 答对啦！真棒！';
+      fb.className = 'feedback ok';
+    } else {
+      btn.classList.add('wrong');
+      wrongCount++;
+      // Highlight correct
+      allBtns.forEach(b => {
+        if (parseInt(b.textContent) === currentAnswer) {
+          b.classList.add('correct');
+        }
+      });
+      fb.textContent = `💡 正确答案是 ${currentAnswer}`;
+      fb.className = 'feedback no';
+    }
+
+    document.getElementById('scoreNum').textContent = score;
+    document.getElementById('progressFill').style.width = ((currentQuestion + 1) * 10) + '%';
+
+    setTimeout(() => {
+      currentQuestion++;
+      showQuestion();
+    }, 1300);
+  }
+
+  // ============ END SCREEN ============
+  function endGame() {
+    document.getElementById('gameScreen').classList.add('hidden');
+    document.getElementById('endScreen').classList.remove('hidden');
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('wrongCount').textContent = wrongCount;
+
+    const msgBox = document.getElementById('messageBox');
+    const trophy = document.getElementById('trophy');
+    let msg = '', tier = 0, icon = '🏆';
+
+    // Message tiers based on score
+    if (score < 60) {
+      msg = '💪 不要放弃！失败是成功的妈妈,再试一次,你一定可以做得更好！';
+      tier = 0;
+      icon = '🌱';
+    } else if (score <= 70) {
+      msg = '🌟 继续加油！你已经在进步了,下次一定会更棒哦!';
+      tier = 1;
+      icon = '🚀';
+    } else if (score <= 80) {
+      msg = '👍 做得很棒哦！你真是个聪明的小朋友,继续保持!';
+      tier = 2;
+      icon = '⭐';
+    } else if (score <= 90) {
+      msg = '✨ 继续努力！你离满分只差一点点啦,加油加油再加油!';
+      tier = 3;
+      icon = '🎖️';
+    } else if (score < 100) {
+      msg = '🎯 非常厉害！再努力一次,争取拿到满分小金星吧!';
+      tier = 4;
+      icon = '🏅';
+    } else {
+      msg = '🏆 太棒啦！满分小天才！给你一个大大的拥抱和一颗闪亮的金星奖励!🎉';
+      tier = 5;
+      icon = '👑';
+      launchConfetti();
+    }
+
+    trophy.textContent = icon;
+    msgBox.textContent = msg;
+    msgBox.className = 'message-box tier-' + tier;
+  }
+
+  function restartGame() {
+    startGame();
+  }
+
+  // ============ CONFETTI (for perfect score) ============
+  function launchConfetti() {
+    const colors = ['#FFD93D', '#FF8B7B', '#8EE4AF', '#7DD3FC', '#C8A8E9'];
+    for (let i = 0; i < 80; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.transform = `rotate(${Math.random() * 360}deg)`;
+      c.style.animation = `fall ${2 + Math.random() * 2}s linear ${Math.random() * 1.5}s forwards`;
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5000);
+    }
+  }
+
+  // Inject confetti keyframes
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+</script>
+
+</body>
+</html>
